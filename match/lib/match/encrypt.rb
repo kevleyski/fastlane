@@ -16,7 +16,9 @@ module Match
 
       unless password
         if !UI.interactive?
-          UI.error "No password found neither in environment nor in local keychain. Bailing out as in non interactive mode."
+          UI.error "Neither the MATCH_PASSWORD environment variable nor the local keychain contained a password."
+          UI.error "Bailing out instead of asking for a password, since this is non-interactive mode."
+          UI.user_error!("Try setting the MATCH_PASSWORD environment variable, or temporarily enable interactive mode to store a password.")
         else
           UI.important "Enter the passphrase that should be used to encrypt/decrypt your certificates"
           UI.important "This passphrase is specific per repository and will be stored in your local keychain"
@@ -43,7 +45,7 @@ module Match
         crypt(path: current,
           password: password(git_url),
            encrypt: true)
-        UI.success "🔒  Encrypted '#{File.basename(current)}'" if $verbose
+        UI.success "🔒  Encrypted '#{File.basename(current)}'" if FastlaneCore::Globals.verbose?
       end
       UI.success "🔒  Successfully encrypted certificates repo"
     end
@@ -61,7 +63,7 @@ module Match
           decrypt_repo(path: path, git_url: git_url)
           return
         end
-        UI.success "🔓  Decrypted '#{File.basename(current)}'" if $verbose
+        UI.success "🔓  Decrypted '#{File.basename(current)}'" if FastlaneCore::Globals.verbose?
       end
       UI.success "🔓  Successfully decrypted certificates repo"
     end
@@ -87,7 +89,7 @@ module Match
       command << "-out #{tmpfile.shellescape}"
       command << "-a"
       command << "-d" unless encrypt
-      command << "&> /dev/null" unless $verbose # to show show an error message is something goes wrong
+      command << "&> /dev/null" unless FastlaneCore::Globals.verbose? # to show show an error message is something goes wrong
       success = system(command.join(' '))
 
       UI.crash!("Error decrypting '#{path}'") unless success

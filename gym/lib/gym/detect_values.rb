@@ -1,3 +1,4 @@
+require 'cfpropertylist'
 module Gym
   # This class detects all kinds of default values
   class DetectValues
@@ -12,18 +13,10 @@ module Gym
       # Detect the project
       FastlaneCore::Project.detect_projects(config)
       Gym.project = FastlaneCore::Project.new(config)
-      detect_provisioning_profile
 
       # Go into the project's folder, as there might be a Gymfile there
       Dir.chdir(File.expand_path("..", Gym.project.path)) do
         config.load_configuration_file(Gym.gymfile_name)
-      end
-
-      config[:use_legacy_build_api] = true if Xcode.pre_7?
-
-      if config[:use_legacy_build_api]
-        UI.deprecated("the use_legacy_build_api option is deprecated")
-        UI.deprecated("it should not be used anymore - e.g.: if you use app-extensions")
       end
 
       detect_scheme
@@ -33,31 +26,32 @@ module Gym
 
       config[:output_name] ||= Gym.project.app_name
 
+      config[:build_path] ||= archive_path_from_local_xcode_preferences
+
       return config
+    end
+
+    def self.archive_path_from_local_xcode_preferences
+      day = Time.now.strftime("%F") # e.g. 2015-08-07
+      archive_path = File.expand_path("~/Library/Developer/Xcode/Archives/#{day}/")
+
+      path = xcode_preference_plist_path
+      return archive_path unless File.exist?(path.to_s) # this file only exists when you edit the Xcode preferences to set custom values
+
+      custom_archive_path = xcode_preferences_dictionary(path)['IDECustomDistributionArchivesLocation']
+      return archive_path if custom_archive_path.to_s.length == 0
+
+      return File.join(custom_archive_path, day)
     end
 
     # Helper Methods
 
-    def self.detect_provisioning_profile
-      if Gym.config[:provisioning_profile_path].nil?
-        return unless Gym.config[:use_legacy_build_api] # we only want to auto-detect the profile when using the legacy build API
+    def self.xcode_preference_plist_path
+      File.expand_path("~/Library/Preferences/com.apple.dt.Xcode.plist")
+    end
 
-        Dir.chdir(File.expand_path("..", Gym.project.path)) do
-          profiles = Dir["*.mobileprovision"]
-          if profiles.count == 1
-            profile = File.expand_path(profiles.last)
-          elsif profiles.count > 1
-            UI.message "Found more than one provisioning profile in the project directory:"
-            profile = choose(*profiles)
-          end
-
-          Gym.config[:provisioning_profile_path] = profile
-        end
-      end
-
-      if Gym.config[:provisioning_profile_path]
-        FastlaneCore::ProvisioningProfile.install(Gym.config[:provisioning_profile_path])
-      end
+    def self.xcode_preferences_dictionary(path)
+      CFPropertyList.native_types(CFPropertyList::List.new(file: path).value)
     end
 
     def self.detect_scheme

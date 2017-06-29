@@ -28,28 +28,39 @@ module Deliver
       return available_options
     end
 
+    def self.force_overwrite_metadata?(options, path)
+      res = options[:force]
+      res ||= ENV["DELIVER_FORCE_OVERWRITE"] # for backward compatibility
+      res ||= UI.confirm("Do you want to overwrite existing metadata on path '#{File.expand_path(path)}'?") if UI.interactive?
+      res
+    end
+
     def run
       program :name, 'deliver'
       program :version, Fastlane::VERSION
       program :description, Deliver::DESCRIPTION
       program :help, 'Author', 'Felix Krause <deliver@krausefx.com>'
       program :help, 'Website', 'https://fastlane.tools'
-      program :help, 'GitHub', 'https://github.com/fastlane/fastlane/tree/master/deliver'
+      program :help, 'GitHub', 'https://github.com/fastlane/fastlane/tree/master/deliver#readme'
       program :help_formatter, :compact
 
-      FastlaneCore::CommanderGenerator.new.generate(deliverfile_options)
-
-      global_option('--verbose') { $verbose = true }
+      global_option('--verbose') { FastlaneCore::Globals.verbose = true }
 
       always_trace!
 
       command :run do |c|
         c.syntax = 'fastlane deliver'
         c.description = 'Upload metadata and binary to iTunes Connect'
+
+        FastlaneCore::CommanderGenerator.new.generate(deliverfile_options, command: c)
+
         c.action do |args, options|
           options = FastlaneCore::Configuration.create(deliverfile_options, options.__hash__)
           loaded = options.load_configuration_file("Deliverfile")
-          loaded = true if options[:description] || options[:ipa] || options[:pkg] # do we have *anything* here?
+
+          # Check if we already have a deliver setup in the current directory
+          loaded = true if options[:description] || options[:ipa] || options[:pkg]
+          loaded = true if File.exist?(File.join(FastlaneCore::FastlaneFolder.path || ".", "metadata"))
           unless loaded
             if UI.confirm("No deliver configuration found in the current directory. Do you want to setup deliver?")
               require 'deliver/setup'
@@ -62,9 +73,13 @@ module Deliver
           Deliver::Runner.new(options).run
         end
       end
+
       command :submit_build do |c|
         c.syntax = 'fastlane deliver submit_build'
         c.description = 'Submit a specific build-nr for review, use latest for the latest build'
+
+        FastlaneCore::CommanderGenerator.new.generate(deliverfile_options, command: c)
+
         c.action do |args, options|
           options = FastlaneCore::Configuration.create(deliverfile_options, options.__hash__)
           options.load_configuration_file("Deliverfile")
@@ -73,9 +88,13 @@ module Deliver
           Deliver::Runner.new(options).run
         end
       end
+
       command :init do |c|
         c.syntax = 'fastlane deliver init'
         c.description = 'Create the initial `deliver` configuration based on an existing app'
+
+        FastlaneCore::CommanderGenerator.new.generate(deliverfile_options, command: c)
+
         c.action do |args, options|
           if File.exist?("Deliverfile") or File.exist?("fastlane/Deliverfile")
             UI.important("You already have a running deliver setup in this directory")
@@ -92,6 +111,9 @@ module Deliver
       command :generate_summary do |c|
         c.syntax = 'fastlane deliver generate_summary'
         c.description = 'Generate HTML Summary without uploading/downloading anything'
+
+        FastlaneCore::CommanderGenerator.new.generate(deliverfile_options, command: c)
+
         c.action do |args, options|
           options = FastlaneCore::Configuration.create(deliverfile_options, options.__hash__)
           options.load_configuration_file("Deliverfile")
@@ -106,11 +128,13 @@ module Deliver
         c.syntax = 'fastlane deliver download_screenshots'
         c.description = "Downloads all existing screenshots from iTunes Connect and stores them in the screenshots folder"
 
+        FastlaneCore::CommanderGenerator.new.generate(deliverfile_options, command: c)
+
         c.action do |args, options|
           options = FastlaneCore::Configuration.create(deliverfile_options(skip_verification: true), options.__hash__)
           options.load_configuration_file("Deliverfile")
           Deliver::Runner.new(options, skip_version: true) # to login...
-          containing = FastlaneCore::Helper.fastlane_enabled? ? './fastlane' : '.'
+          containing = FastlaneCore::Helper.fastlane_enabled_folder_path
           path = options[:screenshots_path] || File.join(containing, 'screenshots')
           Deliver::DownloadScreenshots.run(options, path)
         end
@@ -120,14 +144,15 @@ module Deliver
         c.syntax = 'fastlane deliver download_metadata'
         c.description = "Downloads existing metadata and stores it locally. This overwrites the local files."
 
+        FastlaneCore::CommanderGenerator.new.generate(deliverfile_options, command: c)
+
         c.action do |args, options|
           options = FastlaneCore::Configuration.create(deliverfile_options(skip_verification: true), options.__hash__)
           options.load_configuration_file("Deliverfile")
           Deliver::Runner.new(options) # to login...
-          containing = FastlaneCore::Helper.fastlane_enabled? ? './fastlane' : '.'
+          containing = FastlaneCore::Helper.fastlane_enabled_folder_path
           path = options[:metadata_path] || File.join(containing, 'metadata')
-          res = ENV["DELIVER_FORCE_OVERWRITE"]
-          res ||= UI.confirm("Do you want to overwrite existing metadata on path '#{File.expand_path(path)}'?")
+          res = Deliver::CommandsGenerator.force_overwrite_metadata?(options, path)
           return 0 unless res
 
           require 'deliver/setup'
@@ -147,5 +172,6 @@ module Deliver
 
       run!
     end
+    # rubocop:enable Metrics/PerceivedComplexity
   end
 end

@@ -20,11 +20,13 @@ module FastlaneCore
         "#{format_string(datetime, severity)}#{msg}\n"
       end
 
+      require 'fastlane_core/ui/disable_colors' if FastlaneCore::Helper.colors_disabled?
+
       @log
     end
 
-    def format_string(datetime, severity)
-      if $verbose
+    def format_string(datetime = Time.now, severity = "")
+      if FastlaneCore::Globals.verbose?
         return "#{severity} [#{datetime.strftime('%Y-%m-%d %H:%M:%S.%2N')}]: "
       elsif FastlaneCore::Env.truthy?("FASTLANE_HIDE_TIMESTAMP")
         return ""
@@ -70,11 +72,11 @@ module FastlaneCore
     end
 
     def verbose(message)
-      log.debug(message.to_s) if $verbose
+      log.debug(message.to_s) if FastlaneCore::Globals.verbose?
     end
 
     def header(message)
-      format = format_string(Time.now, "")
+      format = format_string
       if message.length + 8 < TTY::Screen.width - format.length
         message = "--- #{message} ---"
         i = message.length
@@ -99,12 +101,12 @@ module FastlaneCore
 
     def input(message)
       verify_interactive!(message)
-      ask(message.to_s.yellow).to_s.strip
+      ask("#{format_string}#{message.to_s.yellow}").to_s.strip
     end
 
     def confirm(message)
       verify_interactive!(message)
-      agree("#{message} (y/n)".yellow, true)
+      agree("#{format_string}#{message.to_s.yellow} (y/n)", true)
     end
 
     def select(message, options)
@@ -117,7 +119,7 @@ module FastlaneCore
     def password(message)
       verify_interactive!(message)
 
-      ask(message.yellow) { |q| q.echo = "*" }
+      ask("#{format_string}#{message.to_s.yellow}") { |q| q.echo = "*" }
     end
 
     private

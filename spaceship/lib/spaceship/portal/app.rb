@@ -33,8 +33,8 @@ module Spaceship
       # @return (Hash) Feature details
       attr_accessor :features
 
-      # @return (Array) List of enabled features
-      attr_accessor :enabled_features
+      # @return (Array) List of enabled services
+      attr_accessor :enable_services
 
       # @return (Bool) Development Push Enabled?
       attr_accessor :dev_push_enabled
@@ -51,6 +51,9 @@ module Spaceship
       # @return (Fixnum) Number of associated identifiers
       attr_accessor :identifiers_count
 
+      # @return (Array of Spaceship::Portal::AppGroup) Associated groups
+      attr_accessor :associated_groups
+
       attr_mapping(
         'appIdId' => :app_id,
         'name' => :name,
@@ -59,7 +62,7 @@ module Spaceship
         'identifier' => :bundle_id,
         'isWildCard' => :is_wildcard,
         'features' => :features,
-        'enabledFeatures' => :enabled_features,
+        'enabledFeatures' => :enable_services,
         'isDevPushEnabled' => :dev_push_enabled,
         'isProdPushEnabled' => :prod_push_enabled,
         'associatedApplicationGroupsCount' => :app_groups_count,
@@ -68,6 +71,14 @@ module Spaceship
       )
 
       class << self
+        # Create a new object based on a hash.
+        # This is used to create a new object based on the server response.
+        def factory(attrs)
+          obj = self.new(attrs)
+          obj.unfold_associated_groups(attrs['associatedApplicationGroups'])
+          return obj
+        end
+
         # @param mac [Bool] Fetches Mac apps if true
         # @return (Array) Returns all apps available for this account
         def all(mac: false)
@@ -81,14 +92,14 @@ module Spaceship
         # @param name [String] the name of the App
         # @param mac [Bool] is this a Mac app?
         # @return (App) The app you just created
-        def create!(bundle_id: nil, name: nil, mac: false, enabled_features: {})
+        def create!(bundle_id: nil, name: nil, mac: false, enable_services: {})
           if bundle_id.end_with?('*')
             type = :wildcard
           else
             type = :explicit
           end
 
-          new_app = client.create_app!(type, name, bundle_id, mac: mac, enabled_features: enabled_features)
+          new_app = client.create_app!(type, name, bundle_id, mac: mac, enable_services: enable_services)
           self.new(new_app)
         end
 
@@ -96,10 +107,17 @@ module Spaceship
         # @param mac [Bool] Searches Mac apps if true
         # @return (App) The app you're looking for. This is nil if the app can't be found.
         def find(bundle_id, mac: false)
+          raise "`bundle_id` parameter must not be nil" if bundle_id.nil?
           all(mac: mac).find do |app|
             return app if app.bundle_id.casecmp(bundle_id) == 0
           end
         end
+      end
+
+      def unfold_associated_groups(attrs)
+        return unless attrs
+        unfolded_associated_groups = attrs.map { |info| Spaceship::Portal::AppGroup.new(info) }
+        instance_variable_set(:@associated_groups, unfolded_associated_groups)
       end
 
       # Delete this App ID. This action will most likely fail if the App ID is already in the store

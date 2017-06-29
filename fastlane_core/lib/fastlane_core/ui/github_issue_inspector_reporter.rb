@@ -8,7 +8,7 @@ module Fastlane
     def inspector_started_query(query, inspector)
       puts ""
       puts "Looking for related GitHub issues on #{inspector.repo_owner}/#{inspector.repo_name}..."
-      puts "Search query: #{query}" if $verbose
+      puts "Search query: #{query}" if FastlaneCore::Globals.verbose?
       puts ""
     end
 
@@ -45,8 +45,8 @@ module Fastlane
       status = (resolved ? issue.state.green : issue.state.red)
 
       puts "➡️  #{issue.title.yellow}"
-      puts "   #{issue.html_url} [#{status}] #{issue.comments} 💬"
-      puts "   #{Time.parse(issue.updated_at).to_pretty}"
+      puts "    #{issue.html_url} [#{status}] #{issue.comments} 💬"
+      puts "    #{Time.parse(issue.updated_at).to_pretty}"
       puts ""
     end
 

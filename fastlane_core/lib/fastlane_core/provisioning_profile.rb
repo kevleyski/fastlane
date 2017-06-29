@@ -28,8 +28,7 @@ module FastlaneCore
         if (plist || []).count > 5
           plist
         else
-          UI.error("Error parsing provisioning profile at path '#{path}'")
-          nil
+          UI.crash!("Error parsing provisioning profile at path '#{path}'")
         end
       end
 
@@ -62,7 +61,7 @@ module FastlaneCore
           end
         end
 
-        true
+        destination
       end
 
       private

@@ -8,7 +8,13 @@ module Match
                                          hide_keys: [:workspace],
                                              title: "Summary for match #{Fastlane::VERSION}")
 
-      params[:workspace] = GitHelper.clone(params[:git_url], params[:shallow_clone], skip_docs: params[:skip_docs], branch: params[:git_branch])
+      params[:workspace] = GitHelper.clone(params[:git_url],
+                                           params[:shallow_clone],
+                                           skip_docs: params[:skip_docs],
+                                           branch: params[:git_branch],
+                                           git_full_name: params[:git_full_name],
+                                           git_user_email: params[:git_user_email],
+                                           clone_branch_directly: params[:clone_branch_directly])
 
       unless params[:readonly]
         self.spaceship = SpaceshipEnsure.new(params[:username])
@@ -56,8 +62,8 @@ module Match
 
       UI.success "All required keys, certificates and provisioning profiles are installed 🙌".green
     rescue Spaceship::Client::UnexpectedResponse, Spaceship::Client::InvalidUserCredentialsError, Spaceship::Client::NoUserCredentialsError => ex
-      UI.error("An error occured while verifying your certificates and profiles with the Apple Developer Portal.")
-      UI.error("If you already have your certificates stored in git, you can run `match` in readonly mode")
+      UI.error("An error occurred while verifying your certificates and profiles with the Apple Developer Portal.")
+      UI.error("If you already have your certificates stored in git, you can run `fastlane match` in readonly mode")
       UI.error("to just install the certificates and profiles without accessing the Dev Portal.")
       UI.error("To do so, just pass `readonly: true` to your match call.")
       raise ex
@@ -134,7 +140,7 @@ module Match
         self.changes_to_commit = true
       end
 
-      FastlaneCore::ProvisioningProfile.install(profile)
+      installed_profile = FastlaneCore::ProvisioningProfile.install(profile)
 
       parsed = FastlaneCore::ProvisioningProfile.parse(profile)
       uuid = parsed["UUID"]
@@ -162,6 +168,11 @@ module Match
                                                                                     type: prov_type,
                                                                                 platform: params[:platform]),
                              parsed["Name"])
+
+      Utils.fill_environment(Utils.environment_variable_name_profile_path(app_identifier: app_identifier,
+                                                                                    type: prov_type,
+                                                                                platform: params[:platform]),
+                             installed_profile)
 
       return uuid
     end

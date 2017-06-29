@@ -18,8 +18,10 @@
   <a href="https://github.com/fastlane/boarding">boarding</a> &bull;
   <a href="https://github.com/fastlane/fastlane/tree/master/gym">gym</a> &bull;
   <a href="https://github.com/fastlane/fastlane/tree/master/scan">scan</a> &bull;
-  <a href="https://github.com/fastlane/fastlane/tree/master/match">match</a>
+  <a href="https://github.com/fastlane/fastlane/tree/master/match">match</a> &bull;
+  <a href="https://github.com/fastlane/fastlane/tree/master/precheck">precheck</a>
 </p>
+
 -------
 
 <p align="center">
@@ -31,7 +33,6 @@ pem
 
 [![Twitter: @FastlaneTools](https://img.shields.io/badge/contact-@FastlaneTools-blue.svg?style=flat)](https://twitter.com/FastlaneTools)
 [![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat)](https://github.com/fastlane/fastlane/blob/master/pem/LICENSE)
-[![Gem](https://img.shields.io/gem/v/pem.svg?style=flat)](https://rubygems.org/gems/pem)
 
 ###### Automatically generate and renew your push notification profiles
 
@@ -44,6 +45,7 @@ Tired of manually creating and maintaining your push notification profiles for y
 To automate iOS Provisioning profiles you can use [match](https://github.com/fastlane/fastlane/tree/master/match).
 
 -------
+
 <p align="center">
     <a href="#features">Features</a> &bull;
     <a href="#installation">Installation</a> &bull;
@@ -120,7 +122,23 @@ Instead, you may verify the file is valid using OpenSSL:
 
     openssl pkcs12 -info -in my.p12
 
-##### [Like this tool? Be the first to know about updates and new fastlane tools](https://tinyletter.com/krausefx)
+If you need the `p12` in your keychain, perhaps to test push with an app like [Knuff](https://github.com/KnuffApp/Knuff) or [Pusher](https://github.com/noodlewerk/NWPusher), you can use `openssl` to export the `p12` to `pem` and back to `p12`:
+
+    % openssl pkcs12 -in my.p12 -out my.pem
+    Enter Import Password:
+      <hit enter: the p12 has no password>
+    MAC verified OK
+    Enter PEM pass phrase:
+      <enter a temporary password to encrypt the pem file>
+      
+    % openssl pkcs12 -export -in my.pem -out my-with-passphrase.p12
+    Enter pass phrase for temp.pem:
+      <enter the temporary password to decrypt the pem file>
+
+    Enter Export Password:
+      <enter a password for encrypting the new p12 file>
+
+##### [Do you like fastlane? Be the first to know about updates and new fastlane tools](https://tinyletter.com/fastlane-tools)
 
 ## Environment Variables
 
@@ -150,8 +168,9 @@ Run `fastlane pem --help` to get a list of available environment variables.
 - [`gym`](https://github.com/fastlane/fastlane/tree/master/gym): Building your iOS app has never been easier
 - [`scan`](https://github.com/fastlane/fastlane/tree/master/scan): The easiest way to run tests of your iOS and Mac app
 - [`match`](https://github.com/fastlane/fastlane/tree/master/match): Easily sync your certificates and profiles across your team using git
+- [`precheck`](https://github.com/fastlane/fastlane/tree/master/precheck): Check your app using a community driven set of App Store review rules to avoid being rejected
 
-##### [Like this tool? Be the first to know about updates and new fastlane tools](https://tinyletter.com/krausefx)
+##### [Do you like fastlane? Be the first to know about updates and new fastlane tools](https://tinyletter.com/fastlane-tools)
 
 ## Use the 'Provisioning Quicklook plugin'
 Download and install the [Provisioning Plugin](https://github.com/chockenberry/Provisioning).

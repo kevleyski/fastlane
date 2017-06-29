@@ -6,8 +6,8 @@ RAILS = %w(boarding refresher enhancer)
 SECONDS_PER_DAY = 60 * 60 * 24
 
 task :rubygems_admins do
-  names = ["KrauseFx", "ohayon", "asfalcone", "mpirri", "mfurtak", "milch"]
-  (GEMS + ["krausefx-shenzhen"]).each do |gem_name|
+  names = ["KrauseFx", "ohayon", "mpirri", "taquitos"]
+  (GEMS + ["krausefx-shenzhen", "commander-fastlane"]).each do |gem_name|
     names.each do |name|
       puts `gem owner #{gem_name} -a #{name}`
     end
@@ -16,7 +16,7 @@ end
 
 task :test_all do
   formatter = "--format progress"
-  formatter += " -r rspec_junit_formatter --format RspecJunitFormatter -o $CIRCLE_TEST_REPORTS/rspec/junit.xml" if ENV["CIRCLE_TEST_REPORTS"]
+  formatter += " -r rspec_junit_formatter --format RspecJunitFormatter -o $CIRCLE_TEST_REPORTS/rspec/fastlane-junit-results.xml" if ENV["CIRCLE_TEST_REPORTS"]
   sh "rspec --pattern ./**/*_spec.rb #{formatter}"
 end
 

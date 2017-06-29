@@ -122,7 +122,7 @@ describe Spaceship::Client do
       it 'should make a request create an explicit app id with no push feature' do
         payload = {}
         payload[Spaceship.app_service.push_notification.on.service_id] = Spaceship.app_service.push_notification.on
-        response = subject.create_app!(:explicit, 'Production App', 'tools.fastlane.spaceship.some-explicit-app', enabled_features: payload)
+        response = subject.create_app!(:explicit, 'Production App', 'tools.fastlane.spaceship.some-explicit-app', enable_services: payload)
         expect(response['enabledFeatures']).to_not include("push")
         expect(response['identifier']).to eq('tools.fastlane.spaceship.some-explicit-app')
       end
@@ -191,6 +191,45 @@ describe Spaceship::Client do
         expect(device['deviceNumber']).to eq("7f6c8dc83d77134b5a3a1c53f1202b395b04482b")
         expect(device['devicePlatform']).to eq('ios')
         expect(device['status']).to eq('c')
+      end
+    end
+
+    describe '#provisioning_profiles' do
+      it 'makes a call to the developer portal API' do
+        profiles = subject.provisioning_profiles
+        expect(profiles).to be_instance_of(Array)
+        expect(profiles.sample.keys).to include("provisioningProfileId",
+                                                "name",
+                                                "status",
+                                                "type",
+                                                "distributionMethod",
+                                                "proProPlatform",
+                                                "version",
+                                                "dateExpire",
+                                                "managingApp",
+                                                "deviceIds",
+                                                "certificateIds")
+        expect(a_request(:post, 'https://developer.apple.com/services-account/QH65B2/account/ios/profile/listProvisioningProfiles.action')).to have_been_made
+      end
+    end
+
+    describe '#provisioning_profiles_via_xcode_api' do
+      it 'makes a call to the developer portal API' do
+        profiles = subject.provisioning_profiles_via_xcode_api
+        expect(profiles).to be_instance_of(Array)
+        expect(profiles.sample.keys).to include("provisioningProfileId",
+                                                "name",
+                                                "status",
+                                                "type",
+                                                "distributionMethod",
+                                                "proProPlatform",
+                                                "version",
+                                                "dateExpire",
+                                                # "managingApp", not all profiles have it
+                                                "deviceIds",
+                                                "appId",
+                                                "certificateIds")
+        expect(a_request(:post, /developerservices2.apple.com/)).to have_been_made
       end
     end
 

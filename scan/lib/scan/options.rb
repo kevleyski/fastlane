@@ -9,7 +9,7 @@ module Scan
     end
 
     def self.available_options
-      containing = Helper.fastlane_enabled? ? './fastlane' : '.'
+      containing = FastlaneCore::Helper.fastlane_enabled_folder_path
 
       [
         FastlaneCore::ConfigItem.new(key: :workspace,
@@ -44,6 +44,12 @@ module Scan
                                      conflict_block: proc do |value|
                                        UI.user_error!("You can't use 'device' and 'devices' options in one run")
                                      end),
+        FastlaneCore::ConfigItem.new(key: :toolchain,
+                                     env_name: "SCAN_TOOLCHAIN",
+                                     conflicting_options: [:xctestrun],
+                                     description: "The toolchain that should be used for building the application (e.g. com.apple.dt.toolchain.Swift_2_3, org.swift.30p620160816a)",
+                                     optional: true,
+                                     is_string: false),
         FastlaneCore::ConfigItem.new(key: :devices,
                                      optional: true,
                                      is_string: false,
@@ -107,8 +113,14 @@ module Scan
         FastlaneCore::ConfigItem.new(key: :output_types,
                                      short_option: "-f",
                                      env_name: "SCAN_OUTPUT_TYPES",
-                                     description: "Comma separated list of the output types (e.g. html, junit)",
+                                     description: "Comma separated list of the output types (e.g. html, junit, json-compilation-database)",
                                      default_value: "html,junit"),
+        FastlaneCore::ConfigItem.new(key: :output_files,
+                                     env_name: "SCAN_OUTPUT_FILES",
+                                     description: "Comma separated list of the output files, corresponding to the types provided by :output_types (order should match). If specifying an output type of json-compilation-database with :use_clang_report_name enabled, that option will take precedence",
+                                     conflicting_options: [:custom_report_file_name],
+                                     optional: true,
+                                     default_value: nil),
         FastlaneCore::ConfigItem.new(key: :buildlog_path,
                                      short_option: "-l",
                                      env_name: "SCAN_BUILDLOG_PATH",
@@ -129,7 +141,7 @@ module Scan
         FastlaneCore::ConfigItem.new(key: :test_without_building,
                                      short_option: "-T",
                                      env_name: "SCAN_TEST_WITHOUT_BUILDING",
-                                     description: "Test without building, requires a derrived data path",
+                                     description: "Test without building, requires a derived data path",
                                      is_string: false,
                                      conflicting_options: [:build_for_testing],
                                      optional: true),
@@ -217,7 +229,9 @@ module Scan
                                      description: "Create an Incoming WebHook for your Slack group to post results there",
                                      optional: true,
                                      verify_block: proc do |value|
-                                       UI.user_error!("Invalid URL, must start with https://") unless value.start_with? "https://"
+                                       if !value.to_s.empty? && !value.start_with?("https://")
+                                         UI.user_error!("Invalid URL, must start with https://")
+                                       end
                                      end),
         FastlaneCore::ConfigItem.new(key: :slack_channel,
                                      short_option: "-e",
@@ -242,9 +256,12 @@ module Scan
                                     is_string: false,
                                     default_value: false),
         FastlaneCore::ConfigItem.new(key: :custom_report_file_name,
-                                    description: "Sets custom full report file name",
-                                    optional: true,
-                                    is_string: true)
+                                     env_name: "SCAN_CUSTOM_REPORT_FILE_NAME",
+                                     description: "Sets custom full report file name when generating a single report",
+                                     deprecated: "Use --output_files",
+                                     conflicting_options: [:output_files],
+                                     optional: true,
+                                     is_string: true)
       ]
     end
   end

@@ -52,7 +52,7 @@ module Fastlane
       def self.upload_dsym(params, path)
         UI.message("Uploading '#{path}'...")
         command = []
-        command << params[:binary_path].shellescape
+        command << File.expand_path(params[:binary_path]).shellescape
         command << "-a #{params[:api_token]}"
         command << "-p #{params[:platform]}"
         command << File.expand_path(path).shellescape
@@ -77,7 +77,7 @@ module Fastlane
 
       def self.find_binary_path(params)
         params[:binary_path] ||= (Dir["/Applications/Fabric.app/**/upload-symbols"] + Dir["./Pods/**/upload-symbols"]).last
-        UI.user_error!("Please provide a path to the binary using binary_path:") unless params[:binary_path]
+        UI.user_error!("Failed to find Fabric's upload_symbols binary at /Applications/Fabric.app/**/upload-symbols or ./Pods/**/upload-symbols. Please specify the location of the binary explicitly by using the binary_path option") unless params[:binary_path]
 
         params[:binary_path] = File.expand_path(params[:binary_path])
       end
@@ -128,10 +128,10 @@ module Fastlane
                                        end),
           FastlaneCore::ConfigItem.new(key: :platform,
                                        env_name: "FL_UPLOAD_SYMBOLS_TO_CRASHLYTICS_PLATFORM",
-                                       description: "The platform of the app (ios, tvos, mac)",
+                                       description: "The platform of the app (ios, appletvos, mac)",
                                        default_value: "ios",
                                        verify_block: proc do |value|
-                                         available = ['ios', 'tvos', 'mac']
+                                         available = ['ios', 'appletvos', 'mac']
                                          UI.user_error!("Invalid platform '#{value}', must be #{available.join(', ')}") unless available.include?(value)
                                        end)
         ]
@@ -150,7 +150,7 @@ module Fastlane
       end
 
       def self.is_supported?(platform)
-        platform == :ios
+        [:ios, :appletvos].include?(platform)
       end
 
       def self.example_code

@@ -1,4 +1,5 @@
 # coding: utf-8
+
 module Gym
   # This classes methods are called when something goes wrong in the building process
   class ErrorHandler
@@ -53,7 +54,7 @@ module Gym
         print_full_log_path
         print_xcode_path_instructions
         print_xcode_version
-        UI.user_error!("Error building the application - see the log above")
+        UI.build_failure!("Error building the application - see the log above", error_info: output)
       end
 
       # @param [Array] The output of the errored build (line by line)
@@ -84,7 +85,7 @@ module Gym
           print "provisioning profile and code signing identity."
         end
         print_full_log_path
-        UI.user_error!("Error packaging up the application")
+        UI.build_failure!("Error packaging up the application", error_info: output)
       end
 
       def handle_empty_archive
@@ -94,7 +95,7 @@ module Gym
         print "Also, make sure to have a valid code signing identity and provisioning profile installed"
         print "Follow this guide to setup code signing https://docs.fastlane.tools/codesigning/GettingStarted/"
         print "If your intention was only to export an ipa be sure to provide a valid archive at the archive path."
-        UI.user_error!("Archive invalid")
+        UI.build_failure!("Archive invalid")
       end
 
       def find_standard_output_path(output)

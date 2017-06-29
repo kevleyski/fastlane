@@ -18,8 +18,10 @@
   <a href="https://github.com/fastlane/boarding">boarding</a> &bull;
   <a href="https://github.com/fastlane/fastlane/tree/master/gym">gym</a> &bull;
   <a href="https://github.com/fastlane/fastlane/tree/master/scan">scan</a> &bull;
-  <b>match</b>
+  <b>match</b> &bull;
+  <a href="https://github.com/fastlane/fastlane/tree/master/precheck">precheck</a>
 </p>
+
 -------
 
 <p align="center">
@@ -31,7 +33,6 @@ match
 
 [![Twitter: @FastlaneTools](https://img.shields.io/badge/contact-@FastlaneTools-blue.svg?style=flat)](https://twitter.com/FastlaneTools)
 [![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat)](https://github.com/fastlane/fastlane/blob/master/match/LICENSE)
-[![Gem](https://img.shields.io/gem/v/match.svg?style=flat)](https://rubygems.org/gems/match)
 
 ###### Easily sync your certificates and profiles across your team using git
 
@@ -42,6 +43,7 @@ A new approach to iOS code signing: Share one code signing identity across your 
 [More information on how to get started with codesigning](/fastlane/docs/Codesigning)
 
 -------
+
 <p align="center">
     <a href="#why-match">Why?</a> &bull;
     <a href="#installation">Installation</a> &bull;
@@ -77,8 +79,8 @@ Before starting to use `match`, make sure to read the [codesigning.guide](https:
 
 ### What does `match` do for you?
 
-              |  match
---------------------------|------------------------------------------------------------
+|          |  match  |
+|----------|---------|
 :arrows_counterclockwise:  | Automatically sync your iOS keys and profiles across all your team members using git
 :package:  | Handle all the heavy lifting of creating and storing your certificates and profiles
 :computer:  | Setup codesigning on a new machine in under a minute
@@ -250,6 +252,10 @@ match(git_url: "https://github.com/fastlane/fastlane/tree/master/certificates",
       type: "adhoc",
       app_identifier: "tools.fastlane.app")
 
+match(git_url: "https://github.com/fastlane/fastlane/tree/master/certificates",
+      type: "enterprise",
+      app_identifier: "tools.fastlane.app")
+
 # `match` should be called before building the app with `gym`
 gym
 ...
@@ -401,6 +407,7 @@ Because of the potentially dangerous nature of In-House profiles please use _mat
 - [`boarding`](https://github.com/fastlane/boarding): The easiest way to invite your TestFlight beta testers
 - [`gym`](https://github.com/fastlane/fastlane/tree/master/gym): Building your iOS apps has never been easier
 - [`scan`](https://github.com/fastlane/fastlane/tree/master/scan): The easiest way to run tests of your iOS and Mac app
+- [`precheck`](https://github.com/fastlane/fastlane/tree/master/precheck): Check your app using a community driven set of App Store review rules to avoid being rejected
 
 # Need help?
 Please submit an issue on GitHub and provide information about your setup

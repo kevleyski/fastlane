@@ -18,8 +18,10 @@
   <a href="https://github.com/fastlane/boarding">boarding</a> &bull;
   <b>gym</b> &bull;
   <a href="https://github.com/fastlane/fastlane/tree/master/scan">scan</a> &bull;
-  <a href="https://github.com/fastlane/fastlane/tree/master/match">match</a>
+  <a href="https://github.com/fastlane/fastlane/tree/master/match">match</a> &bull;
+  <a href="https://github.com/fastlane/fastlane/tree/master/precheck">precheck</a>
 </p>
+
 -------
 
 <p align="center">
@@ -31,13 +33,13 @@ gym
 
 [![Twitter: @KauseFx](https://img.shields.io/badge/contact-@FastlaneTools-blue.svg?style=flat)](https://twitter.com/FastlaneTools)
 [![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat)](https://github.com/fastlane/fastlane/blob/master/gym/LICENSE)
-[![Gem](https://img.shields.io/gem/v/gym.svg?style=flat)](https://rubygems.org/gems/gym)
 
 ###### Building your app has never been easier
 
 Get in contact with the developer on Twitter: [@FastlaneTools](https://twitter.com/FastlaneTools)
 
 -------
+
 <p align="center">
     <a href="#whats-gym">Features</a> &bull;
     <a href="#installation">Installation</a> &bull;
@@ -52,7 +54,7 @@ Get in contact with the developer on Twitter: [@FastlaneTools](https://twitter.c
 
 # What's gym?
 
-`gym` builds and packages iOS and macOS apps for you. It takes care of all the heavy lifting and makes it super easy to generate a signed `ipa` or `app` file :muscle:
+`gym` builds and packages iOS apps for you. It takes care of all the heavy lifting and makes it super easy to generate a signed `ipa` or `app` file :muscle:
 
 `gym` is a replacement for [shenzhen](https://github.com/nomad/shenzhen).
 
@@ -78,8 +80,8 @@ fastlane gym
 
 `gym` uses the latest APIs to build and sign your application which results in much faster build times.
 
-              |  Gym Features
---------------------------|------------------------------------------------------------
+|          |  Gym Features  |
+|----------|----------------|
 :rocket:            | `gym` builds 30% faster than other build tools like [shenzhen](https://github.com/nomad/shenzhen)
 :checkered_flag: | Beautiful inline build output
 :book:     | Helps you resolve common build errors like code signing issues
@@ -192,7 +194,21 @@ lane :beta do
   gym(scheme: "MyApp")
   crashlytics
 end
+
+# error block is executed when a error occurs
+error do |lane, exception|
+  slack(
+    # message with short human friendly message
+    message: exception.to_s, 
+    success: false, 
+    # Output containing extended log output
+    payload: { "Output" => exception.error_info.to_s } 
+  )
+end
 ```
+
+When gym raises an error the `error_info` property will contain the process output
+in case you want to display the error in 3rd party tools such as Slack.
 
 You can then easily switch between the beta provider (e.g. `testflight`, `hockey`, `s3` and more).
 
@@ -238,18 +254,6 @@ Using this method there are no workarounds for WatchKit or Swift required, as it
 
 Note: the [xcbuild-safe.sh script](https://github.com/fastlane/fastlane/tree/master/gym/lib/assets/wrap_xcodebuild/xcbuild-safe.sh) wraps around xcodebuild to workaround some incompatibilities.
 
-### Xcode 6 and below
-
-```
-/usr/bin/xcrun /path/to/PackageApplication4Gym -v \
-'/Users/felixkrause/Library/Developer/Xcode/Archives/2015-08-11/ExampleProductName 2015-08-11 18.15.30.xcarchive/Products/Applications/name.app' -o \
-'/Users/felixkrause/Library/Developer/Xcode/Archives/2015-08-11/ExampleProductName.ipa' \
---sign "identity" --embed "provProfile"
-```
-
-Note: the official PackageApplication script is replaced by a custom PackageApplication4Gym script. This script is obtained by applying a [set of patches](https://github.com/fastlane/fastlane/tree/master/gym/lib/assets/package_application_patches) on the fly to fix some known issues in the official Xcode PackageApplication script.
-
-Afterwards the `ipa` file is moved to the output folder. The `dSYM` file is compressed and moved to the output folder as well.
 
 # Tips
 ## [`fastlane`](https://fastlane.tools) Toolchain
@@ -266,8 +270,9 @@ Afterwards the `ipa` file is moved to the output folder. The `dSYM` file is comp
 - [`boarding`](https://github.com/fastlane/boarding): The easiest way to invite your TestFlight beta testers
 - [`scan`](https://github.com/fastlane/fastlane/tree/master/scan): The easiest way to run tests of your iOS and Mac app
 - [`match`](https://github.com/fastlane/fastlane/tree/master/match): Easily sync your certificates and profiles across your team using git
+- [`precheck`](https://github.com/fastlane/fastlane/tree/master/precheck): Check your app using a community driven set of App Store review rules to avoid being rejected
 
-##### [Like this tool? Be the first to know about updates and new fastlane tools](https://tinyletter.com/krausefx)
+##### [Do you like fastlane? Be the first to know about updates and new fastlane tools](https://tinyletter.com/fastlane-tools)
 
 ## Use the 'Provisioning Quicklook plugin'
 Download and install the [Provisioning Plugin](https://github.com/chockenberry/Provisioning).
